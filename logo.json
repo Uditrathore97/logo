@@ -1,48 +1,71 @@
 {
-  "name": "Content to Design Automation",
   "nodes": [
     {
-      "parameters": {},
-      "id": "start",
+      "id": "Start",
       "name": "Start",
       "type": "n8n-nodes-base.start",
-      "typeVersion": 1,
-      "position": [250, 300]
+      "position": [200, 300]
     },
     {
+      "id": "Set Data",
+      "name": "Set Data",
+      "type": "n8n-nodes-base.set",
+      "position": [400, 300],
       "parameters": {
         "values": {
           "string": [
             { "name": "subject", "value": "Economic & Social Issues" },
             { "name": "chapter", "value": "Economic Growth and Development" },
             { "name": "title", "value": "RBI One | National News | January 2026" },
-            { "name": "content", "value": "This is the raw content that will be transformed into a structured design format using n8n workflow automation." }
+            { "name": "content", "value": "Automated content converted into PDF using n8n." }
           ]
         }
-      },
-      "id": "setData",
-      "name": "Set Raw Content",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [450, 300]
+      }
     },
     {
-      "parameters": {
-        "functionCode": "const html = `\n<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody {\n  font-family: Arial, sans-serif;\n  margin: 40px;\n}\n.header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n.title {\n  color: #1B71AC;\n  font-size: 24px;\n  font-weight: bold;\n}\n.subtitle {\n  color: #2AB573;\n}\n.content {\n  margin-top: 20px;\n  line-height: 1.6;\n}\n.watermark {\n  position: fixed;\n  top: 30%;\n  left: 30%;\n  opacity: 0.2;\n  font-size: 50px;\n}\n</style>\n</head>\n<body>\n\n<div class=\"header\">\n  <div>\n    <div class=\"title\">${$json.subject}</div>\n    <div class=\"subtitle\">${$json.chapter}</div>\n  </div>\n  <img src=\"https://anujjindal.in/wp-content/uploads/2022/05/LOGO-FULL-01.png\" width=\"120\" />\n</div>\n\n<div class=\"content\">\n  <h2>${$json.title}</h2>\n  <p>${$json.content}</p>\n</div>\n\n<div class=\"watermark\">\n  LOGO\n</div>\n\n</body>\n</html>\n`;\n\nreturn [{ html }];"
-      },
-      "id": "generateHTML",
+      "id": "Generate HTML",
       "name": "Generate HTML",
       "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [700, 300]
+      "position": [600, 300],
+      "parameters": {
+        "functionCode": "const html = `<!DOCTYPE html><html><body><h1>${$json.title}</h1><p>${$json.content}</p></body></html>`;\nreturn [{ html }];"
+      }
+    },
+    {
+      "id": "HTML to PDF",
+      "name": "HTML to PDF",
+      "type": "n8n-nodes-base.htmlPdf",
+      "position": [800, 300],
+      "parameters": {
+        "html": "={{$json[\"html\"]}}",
+        "options": {
+          "format": "A4"
+        }
+      }
+    },
+    {
+      "id": "Write File",
+      "name": "Save PDF",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "position": [1000, 300],
+      "parameters": {
+        "fileName": "output/report.pdf",
+        "dataPropertyName": "data"
+      }
     }
   ],
   "connections": {
     "Start": {
-      "main": [[{ "node": "Set Raw Content", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Set Data", "type": "main", "index": 0 }]]
     },
-    "Set Raw Content": {
+    "Set Data": {
       "main": [[{ "node": "Generate HTML", "type": "main", "index": 0 }]]
+    },
+    "Generate HTML": {
+      "main": [[{ "node": "HTML to PDF", "type": "main", "index": 0 }]]
+    },
+    "HTML to PDF": {
+      "main": [[{ "node": "Save PDF", "type": "main", "index": 0 }]]
     }
   }
 }
